@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCalendar with AI</title>
+    <link rel="stylesheet" th:href="@{/style.css}" href="/style.css">
+</head>
+<body>
+    <h1>設定</h1>
+    <h2>API設定</h2>
+    <input type="checkbox" id="isApiEnabled">
+    <label for="isApiEnabled">外部APIアクセスを有効にする</label>
+    <h3>API KEY</h3>
+    <div id="apiKeyContainer" style="display: none;">
+        <p>あなたのAPIキー: <span id="apiKeyDisplay"></span></p>
+        <button id="copyApiKey">コピー</button>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkbox = document.getElementById('isApiEnabled');
+            const apiKeyContainer = document.getElementById('apiKeyContainer');
+            const apiKeyDisplay = document.getElementById('apiKeyDisplay');
+            const copyButton = document.getElementById('copyApiKey');
+            
+            // ページ読み込み時に現在の設定を確認
+            fetch('/api/settings/api-status')
+                .then(response => response.json())
+                .then(data => {
+                    checkbox.checked = data.enabled;
+                    if (data.enabled && data.apiKey) {
+                        apiKeyDisplay.textContent = data.apiKey;
+                        apiKeyContainer.style.display = 'block';
+                    }
+                })
+                .catch(error => console.error('設定取得エラー:', error));
+            
+            // チェックボックスの変更イベント
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // APIを有効化し、APIキーを取得
+                    fetch('/api/settings/enable-api', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            apiKeyDisplay.textContent = data.apiKey;
+                            apiKeyContainer.style.display = 'block';
+                            alert('外部APIアクセスが有効になりました。');
+                        } else {
+                            alert('エラーが発生しました: ' + data.message);
+                            this.checked = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('API有効化エラー:', error);
+                        alert('エラーが発生しました。');
+                        this.checked = false;
+                    });
+                } else {
+                    // APIを無効化
+                    fetch('/api/settings/disable-api', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            apiKeyContainer.style.display = 'none';
+                            alert('外部APIアクセスが無効になりました。');
+                        } else {
+                            alert('エラーが発生しました: ' + data.message);
+                            this.checked = true;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('API無効化エラー:', error);
+                        alert('エラーが発生しました。');
+                        this.checked = true;
+                    });
+                }
+            });
+            
+            // コピーボタンのイベント
+            copyButton.addEventListener('click', function() {
+                const apiKey = apiKeyDisplay.textContent;
+                navigator.clipboard.writeText(apiKey).then(function() {
+                    alert('APIキーをクリップボードにコピーしました。');
+                }).catch(function(error) {
+                    console.error('コピーエラー:', error);
+                    // フォールバック: テキスト選択
+                    const range = document.createRange();
+                    range.selectNodeContents(apiKeyDisplay);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    alert('APIキーを選択しました。Ctrl+Cでコピーしてください。');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

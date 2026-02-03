@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/login-style.css}" href="/css/login-style.css">
+	<title>ログイン</title>
+</head>
+<body>
+	<div class="login">
+	<h2>ログイン</h2>
+	
+	<div th:if="${param.error}" class="error-message">
+		<strong>ログインエラーが発生しました</strong>
+		<p th:if="${session.SPRING_SECURITY_LAST_EXCEPTION}" th:text="${session.SPRING_SECURITY_LAST_EXCEPTION.message}">エラー詳細</p>
+	</div>
+	
+	<a href="/oauth2/authorization/google">
+		<img src="https://developers.google.com/identity/images/btn_google_signin_light_normal_web.png"
+		alt="Googleでログイン">
+	</a>
+	</div>
+</body>
+</html>
